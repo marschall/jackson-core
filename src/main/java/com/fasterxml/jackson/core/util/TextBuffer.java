@@ -491,7 +491,10 @@ public final class TextBuffer
      * @since 2.14
      */
     public double contentsAsDouble(final boolean useFastParser) throws NumberFormatException {
-        return NumberInput.parseDouble(contentsAsString(), useFastParser);
+        if ((_inputStart >= 0) && (_inputBuffer != null)) {
+            return NumberInput.parseDouble(_inputBuffer, _inputStart, _inputLen, useFastParser);
+        }
+        return NumberInput.parseDouble(_currentSegment, 0, _currentSize, useFastParser);
     }
 
     @Deprecated // @since 2.14
@@ -515,8 +518,10 @@ public final class TextBuffer
      * @since 2.14
      */
     public float contentsAsFloat(boolean useFastParser) throws NumberFormatException {
-        final String numStr = contentsAsString();
-        return NumberInput.parseFloat(numStr, useFastParser);
+        if ((_inputStart >= 0) && (_inputBuffer != null)) {
+            return NumberInput.parseFloat(_inputBuffer, _inputStart, _inputLen, useFastParser);
+        }
+        return NumberInput.parseFloat(_currentSegment, 0, _currentSize, useFastParser);
     }
 
     /**

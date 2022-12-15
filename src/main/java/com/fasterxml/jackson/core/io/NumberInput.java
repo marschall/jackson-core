@@ -393,6 +393,19 @@ public final class NumberInput
     }
 
     /**
+     * @param ch Buffer that contains integer value to decode
+     * @param off Offset of the first digit character in buffer
+     * @param len Length of the number to decode (in characters)
+     * @param useFastParser whether to use {@code FastDoubleParser}
+     * @return closest matching double
+     * @throws NumberFormatException if string cannot be represented by a double
+     * @since v2.15
+     */
+    public static double parseDouble(char[] ch, int off, int len, boolean useFastParser) throws NumberFormatException {
+        return useFastParser ? JavaDoubleParser.parseDouble(ch, off, len) : Double.parseDouble(new String(ch, off, len));
+    }
+
+    /**
      * @param s a string representing a number to parse
      * @return closest matching float
      * @throws NumberFormatException if string cannot be represented by a float where useFastParser=false
@@ -412,6 +425,19 @@ public final class NumberInput
      */
     public static float parseFloat(final String s, final boolean useFastParser) throws NumberFormatException {
         return useFastParser ? JavaFloatParser.parseFloat(s) : Float.parseFloat(s);
+    }
+    
+    /**
+     * @param ch Buffer that contains integer value to decode
+     * @param off Offset of the first digit character in buffer
+     * @param len Length of the number to decode (in characters)
+     * @param useFastParser whether to use {@code FastDoubleParser}
+     * @return closest matching float
+     * @throws NumberFormatException if string cannot be represented by a float
+     * @since v2.14
+     */
+    public static float parseFloat(char[] ch, int off, int len, boolean useFastParser) throws NumberFormatException {
+        return useFastParser ? JavaFloatParser.parseFloat(ch, off, len) : Float.parseFloat(new String(ch, off, len));
     }
 
     /**
