@@ -162,7 +162,10 @@ com.fasterxml.jackson.core.*;version=${project.version}
               <artifact>*:*</artifact>
               <excludes>
                 <exclude>**/*FromByteArray*</exclude>
-                <exclude>**/*FromCharArray*</exclude>
+                <exclude>**/AbstractJson*FromCharArray*</exclude>
+                <exclude>**/JavaBig*FromCharArray*</exclude>
+                <exclude>**/JavaFloatBitsFromCharArray*</exclude>
+                <exclude>**/Json*FromCharArray*</exclude>
               </excludes>
             </filter>
           </filters>
