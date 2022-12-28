@@ -129,8 +129,9 @@ public class DoubleToDecimalChecker extends ToDecimalChecker {
     }
 
     static void toDec(double v) {
-//        String s = Double.toString(v);
-        String s = DoubleToDecimal.toString(v);
+        char[] buffer = new char[AbstractDoubleToDecimal.MAX_CHARS];
+        int count = CharacterDoubleToDecimal.appendTo(v, buffer, 0);
+        String s = new String(buffer, 0, count);
         new DoubleToDecimalChecker(v, s).validate();
     }
 

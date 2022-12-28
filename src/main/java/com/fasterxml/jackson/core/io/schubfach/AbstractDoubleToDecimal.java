@@ -25,8 +25,6 @@
 
 package com.fasterxml.jackson.core.io.schubfach;
 
-import java.io.IOException;
-
 import static java.lang.Double.*;
 import static java.lang.Long.*;
 import static com.fasterxml.jackson.core.io.schubfach.MathUtils.*;
@@ -34,7 +32,7 @@ import static com.fasterxml.jackson.core.io.schubfach.MathUtils.*;
 /**
  * This class exposes a method to render a {@code double} as a string.
  */
-final public class DoubleToDecimal {
+public abstract class AbstractDoubleToDecimal {
     /*
      * For full details about this code see the following references:
      *
@@ -93,12 +91,11 @@ final public class DoubleToDecimal {
     /* Used for left-to-tight digit extraction */
     private static final int MASK_28 = (1 << 28) - 1;
 
-    private static final int NON_SPECIAL    = 0;
-    private static final int PLUS_ZERO      = 1;
-    private static final int MINUS_ZERO     = 2;
-    private static final int PLUS_INF       = 3;
-    private static final int MINUS_INF      = 4;
-    private static final int NAN            = 5;
+    private static final int PLUS_ZERO      = -1;
+    private static final int MINUS_ZERO     = -2;
+    private static final int PLUS_INF       = -3;
+    private static final int MINUS_INF      = -4;
+    private static final int NAN            = -5;
 
     /*
      * Room for the longer of the forms
@@ -109,76 +106,18 @@ final public class DoubleToDecimal {
      */
     public static final int MAX_CHARS = H + 7;
 
-    private final byte[] bytes = new byte[MAX_CHARS];
-
-    /* Index into bytes of rightmost valid character */
-    private int index;
-
-    private DoubleToDecimal() {
+    AbstractDoubleToDecimal() {
     }
 
-    /**
-     * Returns a string representation of the {@code double}
-     * argument. All characters mentioned below are ASCII characters.
-     *
-     * @param   v   the {@code double} to be converted.
-     * @return a string representation of the argument.
-     * @see Double#toString(double)
-     */
-    public static String toString(double v) {
-        return new DoubleToDecimal().toDecimalString(v);
-    }
-
-    /**
-     * Appends the rendering of the {@code v} to {@code app}.
-     *
-     * <p>The outcome is the same as if {@code v} were first
-     * {@link #toString(double) rendered} and the resulting string were then
-     * {@link Appendable#append(CharSequence) appended} to {@code app}.
-     *
-     * @param v the {@code double} whose rendering is appended.
-     * @param app the {@link Appendable} to append to.
-     * @throws IOException If an I/O error occurs
-     */
-    public static Appendable appendTo(double v, Appendable app)
-            throws IOException {
-        return new DoubleToDecimal().appendDecimalTo(v, app);
-    }
-
-    private String toDecimalString(double v) {
-        switch (toDecimal(v)) {
-            case NON_SPECIAL: return charsToString();
-            case PLUS_ZERO: return "0.0";
-            case MINUS_ZERO: return "-0.0";
-            case PLUS_INF: return "Infinity";
-            case MINUS_INF: return "-Infinity";
-            default: return "NaN";
-        }
-    }
-
-    private Appendable appendDecimalTo(double v, Appendable app)
-            throws IOException {
-        switch (toDecimal(v)) {
-            case NON_SPECIAL:
-                char[] chars = new char[index + 1];
-                for (int i = 0; i < chars.length; ++i) {
-                    chars[i] = (char) bytes[i];
-                }
-                if (app instanceof StringBuilder) {
-                    return ((StringBuilder) app).append(chars);
-                }
-                if (app instanceof StringBuffer) {
-                    return ((StringBuffer) app).append(chars);
-                }
-                for (char c : chars) {
-                    app.append(c);
-                }
-                return app;
-            case PLUS_ZERO: return app.append("0.0");
-            case MINUS_ZERO: return app.append("-0.0");
-            case PLUS_INF: return app.append("Infinity");
-            case MINUS_INF: return app.append("-Infinity");
-            default: return app.append("NaN");
+    int appendDecimalTo(double v, Object array, int off) {
+        int decimalResult = toDecimal(v, off, array);
+        switch (decimalResult) {
+            case PLUS_ZERO: return appendString("0.0", off, array);
+            case MINUS_ZERO: return appendString("-0.0", off, array);
+            case PLUS_INF: return appendString("Infinity", off, array);
+            case MINUS_INF: return appendString("-Infinity", off, array);
+            case NAN: return appendString("NaN", off, array);
+            default: return decimalResult;
         }
     }
 
@@ -189,8 +128,9 @@ final public class DoubleToDecimal {
      *     PLUS_INF        iff v is POSITIVE_INFINITY
      *     MINUS_INF       iff v is NEGATIVE_INFINITY
      *     NAN             iff v is NaN
+     *     position of next buffer write otherwise
      */
-    private int toDecimal(double v) {
+    private int toDecimal(double v, int offset, Object array) {
         /*
          * For full details see references [2] and [1].
          *
@@ -204,9 +144,9 @@ final public class DoubleToDecimal {
         long t = bits & T_MASK;
         int bq = (int) (bits >>> P - 1) & BQ_MASK;
         if (bq < BQ_MASK) {
-            index = -1;
+            int index = offset;
             if (bits < 0) {
-                append('-');
+                index = append('-', index, array);
             }
             if (bq != 0) {
                 /* normal value. Here mq = -q */
@@ -216,16 +156,16 @@ final public class DoubleToDecimal {
                 if (0 < mq & mq < P) {
                     long f = c >> mq;
                     if (f << mq == c) {
-                        return toChars(f, 0);
+                        return toChars(f, 0, index, array);
                     }
                 }
-                return toDecimal(-mq, c, 0);
+                return toDecimal(-mq, c, 0, index, array);
             }
             if (t != 0) {
                 /* subnormal value */
                 return t < C_TINY
-                        ? toDecimal(Q_MIN, 10 * t, -1)
-                        : toDecimal(Q_MIN, t, 0);
+                        ? toDecimal(Q_MIN, 10 * t, -1, index, array)
+                        : toDecimal(Q_MIN, t, 0, index, array);
             }
             return bits == 0 ? PLUS_ZERO : MINUS_ZERO;
         }
@@ -235,7 +175,7 @@ final public class DoubleToDecimal {
         return bits > 0 ? PLUS_INF : MINUS_INF;
     }
 
-    private int toDecimal(int q, long c, int dk) {
+    private int toDecimal(int q, long c, int dk, int offset, Object array) {
         /*
          * The skeleton corresponds to figure 7 of [1].
          * The efficient computations are those summarized in figure 9.
@@ -300,7 +240,7 @@ final public class DoubleToDecimal {
             boolean upin = vbl + out <= sp10 << 2;
             boolean wpin = (tp10 << 2) + out <= vbr;
             if (upin != wpin) {
-                return toChars(upin ? sp10 : tp10, k);
+                return toChars(upin ? sp10 : tp10, k, offset, array);
             }
         }
 
@@ -315,14 +255,14 @@ final public class DoubleToDecimal {
         boolean win = (t << 2) + out <= vbr;
         if (uin != win) {
             /* Exactly one of u or w lies in Rv */
-            return toChars(uin ? s : t, k + dk);
+            return toChars(uin ? s : t, k + dk, offset, array);
         }
         /*
          * Both u and w lie in Rv: determine the one closest to v.
          * See section 9.3 of [1].
          */
         long cmp = vb - (s + t << 1);
-        return toChars(cmp < 0 || cmp == 0 && (s & 0x1) == 0 ? s : t, k + dk);
+        return toChars(cmp < 0 || cmp == 0 && (s & 0x1) == 0 ? s : t, k + dk, offset, array);
     }
 
     /*
@@ -341,7 +281,7 @@ final public class DoubleToDecimal {
     /*
      * Formats the decimal f 10^e.
      */
-    private int toChars(long f, int e) {
+    private int toChars(long f, int e, int offset, Object array) {
         /*
          * For details not discussed here see section 10 of [1].
          *
@@ -382,91 +322,90 @@ final public class DoubleToDecimal {
         int m = (int) (hm - 100_000_000 * h);
 
         if (0 < e && e <= 7) {
-            return toChars1(h, m, l, e);
+            return toChars1(h, m, l, e, offset, array);
         }
         if (-3 < e && e <= 0) {
-            return toChars2(h, m, l, e);
+            return toChars2(h, m, l, e, offset, array);
         }
-        return toChars3(h, m, l, e);
+        return toChars3(h, m, l, e, offset, array);
     }
 
-    private int toChars1(int h, int m, int l, int e) {
+    private int toChars1(int h, int m, int l, int e, int offset, Object array) {
         /*
          * 0 < e <= 7: plain format without leading zeroes.
          * Left-to-right digits extraction:
          * algorithm 1 in [3], with b = 10, k = 8, n = 28.
          */
-        appendDigit(h);
+        int index = offset;
+        index = appendDigit(h, index, array);
         int y = y(m);
         int t;
         int i = 1;
         for (; i < e; ++i) {
             t = 10 * y;
-            appendDigit(t >>> 28);
+            index = appendDigit(t >>> 28, index, array);
             y = t & MASK_28;
         }
-        append('.');
+        index = append('.', index, array);
         for (; i <= 8; ++i) {
             t = 10 * y;
-            appendDigit(t >>> 28);
+            index = appendDigit(t >>> 28, index, array);
             y = t & MASK_28;
         }
-        lowDigits(l);
-        return NON_SPECIAL;
+        index = lowDigits(l, index, array);
+        return index;
     }
 
-    private int toChars2(int h, int m, int l, int e) {
+    private int toChars2(int h, int m, int l, int e, int offset, Object array) {
         /* -3 < e <= 0: plain format with leading zeroes */
-        appendDigit(0);
-        append('.');
+        int index = offset;
+        index = appendDigit(0, index, array);
+        index = append('.', index, array);
         for (; e < 0; ++e) {
-            appendDigit(0);
+            index = appendDigit(0, index, array);
         }
-        appendDigit(h);
-        append8Digits(m);
-        lowDigits(l);
-        return NON_SPECIAL;
+        index = appendDigit(h, index, array);
+        index = append8Digits(m, index, array);
+        index = lowDigits(l, index, array);
+        return index;
     }
 
-    private int toChars3(int h, int m, int l, int e) {
+    private int toChars3(int h, int m, int l, int e, int offset, Object array) {
         /* -3 >= e | e > 7: computerized scientific notation */
-        appendDigit(h);
-        append('.');
-        append8Digits(m);
-        lowDigits(l);
-        exponent(e - 1);
-        return NON_SPECIAL;
+        int index = offset;
+        index = appendDigit(h, index, array);
+        index = append('.', index, array);
+        index = append8Digits(m, index, array);
+        index = lowDigits(l, index, array);
+        index = exponent(e - 1, index, array);
+        return index;
     }
 
-    private void lowDigits(int l) {
+    private int lowDigits(int l, int offset, Object array) {
+        int index = offset;
         if (l != 0) {
-            append8Digits(l);
+            index = append8Digits(l, index, array);
         }
-        removeTrailingZeroes();
+        index = removeTrailingZeroes(index, array);
+        return index;
     }
 
-    private void append8Digits(int m) {
+    private int append8Digits(int m, int offset, Object array) {
         /*
          * Left-to-right digits extraction:
          * algorithm 1 in [3], with b = 10, k = 8, n = 28.
          */
+        int index = offset;
         int y = y(m);
         for (int i = 0; i < 8; ++i) {
             int t = 10 * y;
-            appendDigit(t >>> 28);
+            index = appendDigit(t >>> 28, index, array);
             y = t & MASK_28;
         }
+        return index;
     }
 
-    private void removeTrailingZeroes() {
-        while (bytes[index] == '0') {
-            --index;
-        }
-        /* ... but do not remove the one directly to the right of '.' */
-        if (bytes[index] == '.') {
-            ++index;
-        }
-    }
+    abstract int removeTrailingZeroes(int offset, Object array);
 
     private int y(int a) {
         /*
@@ -482,15 +421,16 @@ final public class DoubleToDecimal {
                 193_428_131_138_340_668L) >>> 20) - 1;
     }
 
-    private void exponent(int e) {
-        append('E');
+    private int exponent(int e, int offset, Object array) {
+        int index = offset;
+        index = append('E', index, array);
         if (e < 0) {
-            append('-');
+            index = append('-', index, array);
             e = -e;
         }
         if (e < 10) {
-            appendDigit(e);
-            return;
+            index = appendDigit(e, index, array);
+            return index;
         }
         int d;
         if (e >= 100) {
@@ -499,7 +439,7 @@ final public class DoubleToDecimal {
              *     floor(e / 100) = floor(1_311 e / 2^17)
              */
             d = e * 1_311 >>> 17;
-            appendDigit(d);
+            index = appendDigit(d, index, array);
             e -= 100 * d;
         }
         /*
@@ -507,22 +447,15 @@ final public class DoubleToDecimal {
          *     floor(e / 10) = floor(103 e / 2^10)
          */
         d = e * 103 >>> 10;
-        appendDigit(d);
-        appendDigit(e - 10 * d);
+        index = appendDigit(d, index, array);
+        index = appendDigit(e - 10 * d, index, array);
+        return index;
     }
+    
+    abstract int appendString(String s, int offset, Object array);
 
-    private void append(int c) {
-        bytes[++index] = (byte) c;
-    }
+    abstract int append(int c, int offset, Object array);
 
-    private void appendDigit(int d) {
-        bytes[++index] = (byte) ('0' + d);
-    }
-
-    /* Using the deprecated constructor enhances performance */
-    @SuppressWarnings("deprecation")
-    private String charsToString() {
-        return new String(bytes, 0, 0, index + 1);
-    }
+    abstract int appendDigit(int d, int offset, Object array);
 
 }

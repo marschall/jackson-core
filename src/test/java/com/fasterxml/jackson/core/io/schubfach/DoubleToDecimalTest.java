@@ -104,23 +104,23 @@ public class DoubleToDecimalTest {
 
     @Test
     void testConstants() {
-        assertEquals(DoubleToDecimal.P, P, "P");
+        assertEquals(AbstractDoubleToDecimal.P, P, "P");
         assertTrue((long) (double) C_MIN == C_MIN, "C_MIN");
         assertTrue((long) (double) C_MAX == C_MAX, "C_MAX");
         assertEquals(Double.MIN_VALUE, MIN_VALUE, "MIN_VALUE");
         assertEquals(Double.MIN_NORMAL, MIN_NORMAL, "MIN_NORMAL");
         assertEquals(Double.MAX_VALUE, MAX_VALUE, "MAX_VALUE");
 
-        assertEquals(DoubleToDecimal.Q_MIN, Q_MIN, "Q_MIN");
-        assertEquals(DoubleToDecimal.Q_MAX, Q_MAX, "Q_MAX");
+        assertEquals(AbstractDoubleToDecimal.Q_MIN, Q_MIN, "Q_MIN");
+        assertEquals(AbstractDoubleToDecimal.Q_MAX, Q_MAX, "Q_MAX");
 
-        assertEquals(DoubleToDecimal.K_MIN, K_MIN, "K_MIN");
-        assertEquals(DoubleToDecimal.K_MAX, K_MAX, "K_MAX");
-        assertEquals(DoubleToDecimal.H, H, "H");
+        assertEquals(AbstractDoubleToDecimal.K_MIN, K_MIN, "K_MIN");
+        assertEquals(AbstractDoubleToDecimal.K_MAX, K_MAX, "K_MAX");
+        assertEquals(AbstractDoubleToDecimal.H, H, "H");
 
-        assertEquals(DoubleToDecimal.E_MIN, E_MIN, "E_MIN");
-        assertEquals(DoubleToDecimal.E_MAX, E_MAX, "E_MAX");
-        assertEquals(DoubleToDecimal.C_TINY, C_TINY, "C_TINY");
+        assertEquals(AbstractDoubleToDecimal.E_MIN, E_MIN, "E_MIN");
+        assertEquals(AbstractDoubleToDecimal.E_MAX, E_MAX, "E_MAX");
+        assertEquals(AbstractDoubleToDecimal.C_TINY, C_TINY, "C_TINY");
     }
 
     @Test

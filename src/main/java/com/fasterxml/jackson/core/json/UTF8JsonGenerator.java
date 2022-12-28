@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.io.CharTypes;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.io.NumberOutput;
+import com.fasterxml.jackson.core.io.schubfach.AbstractDoubleToDecimal;
 
 public class UTF8JsonGenerator
     extends JsonGeneratorImpl
@@ -1038,17 +1039,34 @@ public class UTF8JsonGenerator
     @Override
     public void writeNumber(double d) throws IOException
     {
+        _verifyValueWrite(WRITE_NUMBER);
         boolean useFastWriter = isEnabled(Feature.USE_FAST_DOUBLE_WRITER);
         if (_cfgNumbersAsStrings ||
             (NumberOutput.notFinite(d)
                 && Feature.QUOTE_NON_NUMERIC_NUMBERS.enabledIn(_features))) {
-            writeString(NumberOutput.toString(d, useFastWriter));
+            if ((_outputTail + AbstractDoubleToDecimal.MAX_CHARS + 2) >= _outputEnd) {
+                _flushBuffer();
+            }
+            _writeQuotedDouble(d, useFastWriter);
             return;
         }
-        // What is the max length for doubles? 40 chars?
-        _verifyValueWrite(WRITE_NUMBER);
+        if ((_outputTail + AbstractDoubleToDecimal.MAX_CHARS) >= _outputEnd) {
+            _flushBuffer();
+        }
+        _writeDouble(d, useFastWriter);
+    }
+
+    private final void _writeQuotedDouble(double d, boolean useFastWriter) throws IOException
+    {
+        _outputBuffer[_outputTail++] = _quoteChar;
+        _writeDouble(d, useFastWriter);
+        _outputBuffer[_outputTail++] = _quoteChar;
+    }
+
+    private final void _writeDouble(double d, boolean useFastWriter) throws IOException
+    {
         if (useFastWriter) {
-            writeRaw(NumberOutput.toString(d, useFastWriter));
+            _outputTail = NumberOutput.outputDouble(d, _outputBuffer, _outputTail);
         } else {
             if (this._doubleBuffer == null) {
                 this._doubleBuffer = new StringBuilder();

@@ -1,6 +1,7 @@
 package com.fasterxml.jackson.core.io;
 
-import com.fasterxml.jackson.core.io.schubfach.DoubleToDecimal;
+import com.fasterxml.jackson.core.io.schubfach.ByteDoubleToDecimal;
+import com.fasterxml.jackson.core.io.schubfach.CharacterDoubleToDecimal;
 import com.fasterxml.jackson.core.io.schubfach.FloatToDecimal;
 
 public final class NumberOutput
@@ -245,6 +246,29 @@ public final class NumberOutput
         return _outputFullBillion((int) v, b, off);
     }
 
+    /**
+     * Method for appending value of given {@code double} value into
+     * specified {@code char[]}.
+     *<p>
+     * NOTE: caller must guarantee that the output buffer has enough room
+     * for String representation of the value.
+     *
+     * @param v Value to append to buffer
+     * @param b Buffer to append value to: caller must guarantee there is enough room
+     * @param off Offset within output buffer ({@code b}) to append number at
+     *
+     * @return Offset within buffer after outputting {@code int}
+     */
+    public static int outputDouble(double v, char[] b, int off)
+    {
+        return CharacterDoubleToDecimal.appendTo(v, b, off);
+    }
+
+    public static int outputDouble(double v, byte[] b, int off)
+    {
+        return ByteDoubleToDecimal.appendTo(v, b, off);
+    }
+
     /*
     /**********************************************************
     /* Convenience serialization methods
@@ -274,24 +298,6 @@ public final class NumberOutput
             return toString((int) v);
         }
         return Long.toString(v);
-    }
-
-    /**
-     * @param v double
-     * @return double as a string
-     */
-    public static String toString(final double v) {
-        return toString(v, false);
-    }
-
-    /**
-     * @param v double
-     * @param useFastWriter whether to use Schubfach algorithm to write output (default false)
-     * @return double as a string
-     * @since 2.14
-     */
-    public static String toString(final double v, final boolean useFastWriter) {
-        return useFastWriter ? DoubleToDecimal.toString(v) : Double.toString(v);
     }
 
     /**

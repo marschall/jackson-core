@@ -7,6 +7,8 @@ import org.junit.runners.JUnit4;
 public class SchubfachDoubleTest extends DoubleToStringTest {
   @Override
   String f(double f) {
-    return DoubleToDecimal.toString(f);
+    char[] buffer = new char[AbstractDoubleToDecimal.MAX_CHARS];
+    int count = CharacterDoubleToDecimal.appendTo(f, buffer, 0);
+    return new String(buffer, 0, count);
   }
 }
