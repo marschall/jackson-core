@@ -53,6 +53,12 @@ public class WriterBasedJsonGenerator
     protected char[] _outputBuffer;
 
     /**
+     * Intermediate buffer into which doubles are written before
+     * being copied to {@link #_outputBuffer}.
+     */
+    protected StringBuilder _doubleBuffer;
+
+    /**
      * Pointer to the first buffered character to output
      */
     protected int _outputHead;
@@ -810,28 +816,58 @@ public class WriterBasedJsonGenerator
     @Override
     public void writeNumber(double d) throws IOException
     {
+        boolean useFastWriter = isEnabled(Feature.USE_FAST_DOUBLE_WRITER);
         if (_cfgNumbersAsStrings ||
                 (NumberOutput.notFinite(d) && isEnabled(Feature.QUOTE_NON_NUMERIC_NUMBERS))) {
-            writeString(NumberOutput.toString(d, isEnabled(Feature.USE_FAST_DOUBLE_WRITER)));
+            writeString(NumberOutput.toString(d, useFastWriter));
             return;
         }
         // What is the max length for doubles? 40 chars?
         _verifyValueWrite(WRITE_NUMBER);
-        writeRaw(NumberOutput.toString(d, isEnabled(Feature.USE_FAST_DOUBLE_WRITER)));
+        if (useFastWriter) {
+            writeRaw(NumberOutput.toString(d, useFastWriter));
+        } else {
+            if (this._doubleBuffer == null) {
+                this._doubleBuffer = new StringBuilder();
+            }
+            this._doubleBuffer.setLength(0);
+            this._doubleBuffer.append(d);
+            int len = this._doubleBuffer.length();
+            if ((_outputTail + len) >= _outputEnd) {
+                _flushBuffer();
+            }
+            this._doubleBuffer.getChars(0, len, _outputBuffer, _outputTail);
+            _outputTail += len;
+        }
     }
 
     @SuppressWarnings("deprecation")
     @Override
     public void writeNumber(float f) throws IOException
     {
+        boolean useFastWriter = isEnabled(Feature.USE_FAST_DOUBLE_WRITER);
         if (_cfgNumbersAsStrings ||
                 (NumberOutput.notFinite(f) && isEnabled(Feature.QUOTE_NON_NUMERIC_NUMBERS))) {
-            writeString(NumberOutput.toString(f, isEnabled(Feature.USE_FAST_DOUBLE_WRITER)));
+            writeString(NumberOutput.toString(f, useFastWriter));
             return;
         }
         // What is the max length for floats?
         _verifyValueWrite(WRITE_NUMBER);
-        writeRaw(NumberOutput.toString(f, isEnabled(Feature.USE_FAST_DOUBLE_WRITER)));
+        if (useFastWriter) {
+            writeRaw(NumberOutput.toString(f, useFastWriter));
+        } else {
+            if (this._doubleBuffer == null) {
+                this._doubleBuffer = new StringBuilder();
+            }
+            this._doubleBuffer.setLength(0);
+            this._doubleBuffer.append(f);
+            int len = this._doubleBuffer.length();
+            if ((_outputTail + len) >= _outputEnd) {
+                _flushBuffer();
+            }
+            this._doubleBuffer.getChars(0, len, _outputBuffer, _outputTail);
+            _outputTail += len;
+        }
     }
 
     @Override
