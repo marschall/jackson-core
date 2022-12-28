@@ -1,8 +1,9 @@
 package com.fasterxml.jackson.core.io;
 
 import com.fasterxml.jackson.core.io.schubfach.ByteDoubleToDecimal;
+import com.fasterxml.jackson.core.io.schubfach.ByteFloatToDecimal;
 import com.fasterxml.jackson.core.io.schubfach.CharacterDoubleToDecimal;
-import com.fasterxml.jackson.core.io.schubfach.FloatToDecimal;
+import com.fasterxml.jackson.core.io.schubfach.CharacterFloatToDecimal;
 
 public final class NumberOutput
 {
@@ -268,6 +269,29 @@ public final class NumberOutput
     {
         return ByteDoubleToDecimal.appendTo(v, b, off);
     }
+    
+    /**
+     * Method for appending value of given {@code float} value into
+     * specified {@code char[]}.
+     *<p>
+     * NOTE: caller must guarantee that the output buffer has enough room
+     * for String representation of the value.
+     *
+     * @param v Value to append to buffer
+     * @param b Buffer to append value to: caller must guarantee there is enough room
+     * @param off Offset within output buffer ({@code b}) to append number at
+     *
+     * @return Offset within buffer after outputting {@code int}
+     */
+    public static int outputFloat(float v, char[] b, int off)
+    {
+        return CharacterFloatToDecimal.appendTo(v, b, off);
+    }
+    
+    public static int outputFloat(float v, byte[] b, int off)
+    {
+        return ByteFloatToDecimal.appendTo(v, b, off);
+    }
 
     /*
     /**********************************************************
@@ -298,25 +322,6 @@ public final class NumberOutput
             return toString((int) v);
         }
         return Long.toString(v);
-    }
-
-    /**
-     * @param v float
-     * @return float as a string
-     * @since 2.6
-     */
-    public static String toString(final float v) {
-        return toString(v, false);
-    }
-
-    /**
-     * @param v float
-     * @param useFastWriter whether to use Schubfach algorithm to write output (default false)
-     * @return float as a string
-     * @since 2.14
-     */
-    public static String toString(final float v, final boolean useFastWriter) {
-        return useFastWriter ? FloatToDecimal.toString(v) : Float.toString(v);
     }
 
     /*

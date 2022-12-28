@@ -1,18 +1,18 @@
 package com.fasterxml.jackson.core.io.schubfach;
 
-public final class CharacterDoubleToDecimal extends AbstractDoubleToDecimal {
+public final class CharacterFloatToDecimal extends AbstractFloatToDecimal {
     
-    private static final AbstractDoubleToDecimal INSTANCE = new CharacterDoubleToDecimal();
+    private static final AbstractFloatToDecimal INSTANCE = new CharacterFloatToDecimal();
 
     /**
      * Appends the rendering of the {@code v} to {@code array}.
      *
-     * @param v the {@code double} whose rendering is appended.
+     * @param v the {@code float} whose rendering is appended.
      * @param array the {@link char[]} to append to.
      * @param off the index at which writing into {@link char[]} should start
      * @return next free index in {@link char[]}
      */
-    public static int appendTo(double v, char[] array, int off) {
+    public static int appendTo(float v, char[] array, int off) {
         return INSTANCE.appendDecimalTo(v, array, off);
     }
 

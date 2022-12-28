@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.io.NumberOutput;
 import com.fasterxml.jackson.core.io.schubfach.AbstractDoubleToDecimal;
+import com.fasterxml.jackson.core.io.schubfach.AbstractFloatToDecimal;
 
 public class UTF8JsonGenerator
     extends JsonGeneratorImpl
@@ -1088,17 +1089,34 @@ public class UTF8JsonGenerator
     @Override
     public void writeNumber(float f) throws IOException
     {
+        _verifyValueWrite(WRITE_NUMBER);
         boolean useFastWriter = isEnabled(Feature.USE_FAST_DOUBLE_WRITER);
         if (_cfgNumbersAsStrings ||
             (NumberOutput.notFinite(f)
                 && Feature.QUOTE_NON_NUMERIC_NUMBERS.enabledIn(_features))) {
-            writeString(NumberOutput.toString(f, useFastWriter));
+            if ((_outputTail + AbstractFloatToDecimal.MAX_CHARS + 2) >= _outputEnd) {
+                _flushBuffer();
+            }
+            _writeQuotedFloat(f, useFastWriter);
             return;
         }
-        // What is the max length for floats?
-        _verifyValueWrite(WRITE_NUMBER);
+        if ((_outputTail + AbstractFloatToDecimal.MAX_CHARS) >= _outputEnd) {
+            _flushBuffer();
+        }
+        _writeFloat(f, useFastWriter);
+    }
+
+    private final void _writeQuotedFloat(float d, boolean useFastWriter) throws IOException
+    {
+        _outputBuffer[_outputTail++] = _quoteChar;
+        _writeFloat(d, useFastWriter);
+        _outputBuffer[_outputTail++] = _quoteChar;
+    }
+
+    private final void _writeFloat(float f, boolean useFastWriter) throws IOException
+    {
         if (useFastWriter) {
-            writeRaw(NumberOutput.toString(f, useFastWriter));
+            _outputTail = NumberOutput.outputFloat(f, _outputBuffer, _outputTail);
         } else {
             if (this._doubleBuffer == null) {
                 this._doubleBuffer = new StringBuilder();

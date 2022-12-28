@@ -7,6 +7,8 @@ import org.junit.runners.JUnit4;
 public class SchubfachFloatTest extends FloatToStringTest {
   @Override
   String f(float f) {
-    return FloatToDecimal.toString(f);
+  char[] buffer = new char[AbstractFloatToDecimal.MAX_CHARS];
+  int count = CharacterFloatToDecimal.appendTo(f, buffer, 0);
+  return new String(buffer, 0, count);
   }
 }

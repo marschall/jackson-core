@@ -41,7 +41,7 @@ public final class ByteDoubleToDecimal extends AbstractDoubleToDecimal {
     }
 
     @Override
-    int append(int c, int offset, Object array) {
+    int append(char c, int offset, Object array) {
         ((byte[]) array)[offset] = (byte) c;
         return offset + 1;
     }

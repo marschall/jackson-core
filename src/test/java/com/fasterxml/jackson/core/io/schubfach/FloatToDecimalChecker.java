@@ -127,8 +127,9 @@ public class FloatToDecimalChecker extends ToDecimalChecker {
     }
 
     static void toDec(float v) {
-//        String s = Float.toString(v);
-        String s = FloatToDecimal.toString(v);
+        char[] buffer = new char[AbstractFloatToDecimal.MAX_CHARS];
+        int count = CharacterFloatToDecimal.appendTo(v, buffer, 0);
+        String s = new String(buffer, 0, count);
         new FloatToDecimalChecker(v, s).validate();
     }
 

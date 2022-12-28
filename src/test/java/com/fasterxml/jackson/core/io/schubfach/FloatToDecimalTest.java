@@ -71,23 +71,23 @@ public class FloatToDecimalTest {
 
     @Test
     void testConstants() {
-        assertEquals(FloatToDecimal.P, P, "P");
+        assertEquals(AbstractFloatToDecimal.P, P, "P");
         assertTrue((long) (float) C_MIN == C_MIN, "C_MIN");
         assertTrue((long) (float) C_MAX == C_MAX, "C_MAX");
         assertEquals(Float.MIN_VALUE, MIN_VALUE, "MIN_VALUE");
         assertEquals(Float.MIN_NORMAL, MIN_NORMAL, "MIN_NORMAL");
         assertEquals(Float.MAX_VALUE, MAX_VALUE, "MAX_VALUE");
 
-        assertEquals(FloatToDecimal.Q_MIN, Q_MIN, "Q_MIN");
-        assertEquals(FloatToDecimal.Q_MAX, Q_MAX, "Q_MAX");
+        assertEquals(AbstractFloatToDecimal.Q_MIN, Q_MIN, "Q_MIN");
+        assertEquals(AbstractFloatToDecimal.Q_MAX, Q_MAX, "Q_MAX");
 
-        assertEquals(FloatToDecimal.K_MIN, K_MIN, "K_MIN");
-        assertEquals(FloatToDecimal.K_MAX, K_MAX, "K_MAX");
-        assertEquals(FloatToDecimal.H, H, "H");
+        assertEquals(AbstractFloatToDecimal.K_MIN, K_MIN, "K_MIN");
+        assertEquals(AbstractFloatToDecimal.K_MAX, K_MAX, "K_MAX");
+        assertEquals(AbstractFloatToDecimal.H, H, "H");
 
-        assertEquals(FloatToDecimal.E_MIN, E_MIN, "E_MIN");
-        assertEquals(FloatToDecimal.E_MAX, E_MAX, "E_MAX");
-        assertEquals(FloatToDecimal.C_TINY, C_TINY, "C_TINY");
+        assertEquals(AbstractFloatToDecimal.E_MIN, E_MIN, "E_MIN");
+        assertEquals(AbstractFloatToDecimal.E_MAX, E_MAX, "E_MAX");
+        assertEquals(AbstractFloatToDecimal.C_TINY, C_TINY, "C_TINY");
     }
 
     @Test

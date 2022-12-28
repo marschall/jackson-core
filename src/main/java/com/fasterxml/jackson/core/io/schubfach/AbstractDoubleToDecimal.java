@@ -429,8 +429,7 @@ public abstract class AbstractDoubleToDecimal {
             e = -e;
         }
         if (e < 10) {
-            index = appendDigit(e, index, array);
-            return index;
+            return appendDigit(e, index, array);
         }
         int d;
         if (e >= 100) {
@@ -451,10 +450,10 @@ public abstract class AbstractDoubleToDecimal {
         index = appendDigit(e - 10 * d, index, array);
         return index;
     }
-    
+
     abstract int appendString(String s, int offset, Object array);
 
-    abstract int append(int c, int offset, Object array);
+    abstract int append(char c, int offset, Object array);
 
     abstract int appendDigit(int d, int offset, Object array);
 

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.io.NumberOutput;
 import com.fasterxml.jackson.core.io.schubfach.AbstractDoubleToDecimal;
+import com.fasterxml.jackson.core.io.schubfach.AbstractFloatToDecimal;
 
 /**
  * {@link JsonGenerator} that outputs JSON content using a {@link java.io.Writer}
@@ -861,16 +862,34 @@ public class WriterBasedJsonGenerator
     @Override
     public void writeNumber(float f) throws IOException
     {
+        _verifyValueWrite(WRITE_NUMBER);
         boolean useFastWriter = isEnabled(Feature.USE_FAST_DOUBLE_WRITER);
         if (_cfgNumbersAsStrings ||
                 (NumberOutput.notFinite(f) && isEnabled(Feature.QUOTE_NON_NUMERIC_NUMBERS))) {
-            writeString(NumberOutput.toString(f, useFastWriter));
+            if ((_outputTail + AbstractFloatToDecimal.MAX_CHARS + 2) >= _outputEnd) {
+                _flushBuffer();
+            }
+            _writeQuotedFloat(f, useFastWriter);
             return;
         }
-        // What is the max length for floats?
-        _verifyValueWrite(WRITE_NUMBER);
+        if ((_outputTail + AbstractFloatToDecimal.MAX_CHARS) >= _outputEnd) {
+            _flushBuffer();
+        }
+        _writeFloat(f, useFastWriter);
+    }
+    
+
+    private final void _writeQuotedFloat(float f, boolean useFastWriter) throws IOException
+    {
+        _outputBuffer[_outputTail++] = _quoteChar;
+        _writeFloat(f, useFastWriter);
+        _outputBuffer[_outputTail++] = _quoteChar;
+    }
+    
+    private final void _writeFloat(float f, boolean useFastWriter) throws IOException
+    {
         if (useFastWriter) {
-            writeRaw(NumberOutput.toString(f, useFastWriter));
+            _outputTail = NumberOutput.outputFloat(f, _outputBuffer, _outputTail);
         } else {
             if (this._doubleBuffer == null) {
                 this._doubleBuffer = new StringBuilder();
@@ -878,9 +897,6 @@ public class WriterBasedJsonGenerator
             this._doubleBuffer.setLength(0);
             this._doubleBuffer.append(f);
             int len = this._doubleBuffer.length();
-            if ((_outputTail + len) >= _outputEnd) {
-                _flushBuffer();
-            }
             this._doubleBuffer.getChars(0, len, _outputBuffer, _outputTail);
             _outputTail += len;
         }
